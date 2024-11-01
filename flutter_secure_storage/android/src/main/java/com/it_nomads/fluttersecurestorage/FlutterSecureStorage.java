@@ -2,13 +2,11 @@ package com.it_nomads.fluttersecurestorage;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
 import android.util.Log;
 
-import androidx.annotation.RequiresApi;
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKey;
 
@@ -38,13 +36,7 @@ public class FlutterSecureStorage {
     public FlutterSecureStorage(Context context, Map<String, Object> options) {
         this.options = options;
         applicationContext = context.getApplicationContext();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            charset = StandardCharsets.UTF_8;
-        } else {
-            //noinspection CharsetObjectCanBeUsed
-            charset = Charset.forName("UTF-8");
-        }
+        charset = StandardCharsets.UTF_8;
     }
 
     @SuppressWarnings({"ConstantConditions"})
@@ -57,7 +49,7 @@ public class FlutterSecureStorage {
         if (failedToUseEncryptedSharedPreferences) {
             return false;
         }
-        return options.containsKey("encryptedSharedPreferences") && options.get("encryptedSharedPreferences").equals("true") && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
+        return options.containsKey("encryptedSharedPreferences") && options.get("encryptedSharedPreferences").equals("true");
     }
 
     public boolean containsKey(String key) {
@@ -165,7 +157,7 @@ public class FlutterSecureStorage {
                 Log.e(TAG, "StorageCipher initialization failed", e);
             }
         }
-        if (getUseEncryptedSharedPreferences() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (getUseEncryptedSharedPreferences()) {
             try {
                 preferences = initializeEncryptedSharedPreferencesManager(applicationContext);
                 checkAndMigrateToEncrypted(nonEncryptedPreferences, preferences);
@@ -235,7 +227,6 @@ public class FlutterSecureStorage {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
     private SharedPreferences initializeEncryptedSharedPreferencesManager(Context context) throws GeneralSecurityException, IOException {
         MasterKey key = new MasterKey.Builder(context)
                 .setKeyGenParameterSpec(

@@ -7,47 +7,47 @@ import android.os.Build;
 import java.util.Map;
 
 enum KeyCipherAlgorithm {
-    RSA_ECB_PKCS1Padding(RSACipher18Implementation::new, 1),
-    @SuppressWarnings({"UnusedDeclaration"})
-    RSA_ECB_OAEPwithSHA_256andMGF1Padding(RSACipherOAEPImplementation::new, Build.VERSION_CODES.M);
-    final KeyCipherFunction keyCipher;
+    RSA_ECB_PKCS1Padding(1),
+    RSA_ECB_OAEPwithSHA_256andMGF1Padding(Build.VERSION_CODES.M);
     final int minVersionCode;
 
-    KeyCipherAlgorithm(KeyCipherFunction keyCipher, int minVersionCode) {
-        this.keyCipher = keyCipher;
+    KeyCipherAlgorithm(int minVersionCode) {
         this.minVersionCode = minVersionCode;
+    }
+
+    public KeyCipher keyCipher(Context context) throws Exception {
+        if (this != KeyCipherAlgorithm.RSA_ECB_OAEPwithSHA_256andMGF1Padding) {
+            throw new IllegalStateException("Unsupported key cipher algorithm: " + this);
+        }
+
+        return new RSACipherOAEPImplementation(context);
     }
 }
 
 enum StorageCipherAlgorithm {
-    AES_CBC_PKCS7Padding(StorageCipher18Implementation::new, 1),
-    @SuppressWarnings({"UnusedDeclaration"})
-    AES_GCM_NoPadding(StorageCipherGCMImplementation::new, Build.VERSION_CODES.M);
-    final StorageCipherFunction storageCipher;
+    AES_CBC_PKCS7Padding(1),
+    AES_GCM_NoPadding(Build.VERSION_CODES.M);
     final int minVersionCode;
 
-    StorageCipherAlgorithm(StorageCipherFunction storageCipher, int minVersionCode) {
-        this.storageCipher = storageCipher;
+    StorageCipherAlgorithm(int minVersionCode) {
         this.minVersionCode = minVersionCode;
     }
-}
 
-@FunctionalInterface
-interface StorageCipherFunction {
-    StorageCipher apply(Context context, KeyCipher keyCipher) throws Exception;
-}
+    public StorageCipher storageCipher(Context context, KeyCipher keyCipher) throws Exception {
+        if (this != StorageCipherAlgorithm.AES_GCM_NoPadding) {
+            throw new IllegalStateException("Unsupported storage cipher algorithm: " + this);
+        }
 
-@FunctionalInterface
-interface KeyCipherFunction {
-    KeyCipher apply(Context context) throws Exception;
+        return new StorageCipherGCMImplementation(context, keyCipher);
+    }
 }
 
 public class StorageCipherFactory {
     private static final String ELEMENT_PREFERENCES_ALGORITHM_PREFIX = "FlutterSecureSAlgorithm";
     private static final String ELEMENT_PREFERENCES_ALGORITHM_KEY = ELEMENT_PREFERENCES_ALGORITHM_PREFIX + "Key";
     private static final String ELEMENT_PREFERENCES_ALGORITHM_STORAGE = ELEMENT_PREFERENCES_ALGORITHM_PREFIX + "Storage";
-    private static final KeyCipherAlgorithm DEFAULT_KEY_ALGORITHM = KeyCipherAlgorithm.RSA_ECB_PKCS1Padding;
-    private static final StorageCipherAlgorithm DEFAULT_STORAGE_ALGORITHM = StorageCipherAlgorithm.AES_CBC_PKCS7Padding;
+    private static final KeyCipherAlgorithm DEFAULT_KEY_ALGORITHM = KeyCipherAlgorithm.RSA_ECB_OAEPwithSHA_256andMGF1Padding;
+    private static final StorageCipherAlgorithm DEFAULT_STORAGE_ALGORITHM = StorageCipherAlgorithm.AES_GCM_NoPadding;
 
     private final KeyCipherAlgorithm savedKeyAlgorithm;
     private final StorageCipherAlgorithm savedStorageAlgorithm;
@@ -74,13 +74,13 @@ public class StorageCipherFactory {
     }
 
     public StorageCipher getSavedStorageCipher(Context context) throws Exception {
-        final KeyCipher keyCipher = savedKeyAlgorithm.keyCipher.apply(context);
-        return savedStorageAlgorithm.storageCipher.apply(context, keyCipher);
+        final KeyCipher keyCipher = savedKeyAlgorithm.keyCipher(context);
+        return savedStorageAlgorithm.storageCipher(context, keyCipher);
     }
 
     public StorageCipher getCurrentStorageCipher(Context context) throws Exception {
-        final KeyCipher keyCipher = currentKeyAlgorithm.keyCipher.apply(context);
-        return currentStorageAlgorithm.storageCipher.apply(context, keyCipher);
+        final KeyCipher keyCipher = currentKeyAlgorithm.keyCipher(context);
+        return currentStorageAlgorithm.storageCipher(context, keyCipher);
     }
 
     public void storeCurrentAlgorithms(SharedPreferences.Editor editor) {
