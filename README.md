@@ -17,14 +17,13 @@ On devices running Android with version less than 6, plugin will fall back to de
 Choosing algorithm is irrelevant if you are using EncryptedSharedPreferences as described below.
 - With v5.0.0 we can use [EncryptedSharedPreferences](https://developer.android.com/topic/security/data) on Android by enabling it in the Android Options like so:
 ```dart
-  AndroidOptions _getAndroidOptions() => const AndroidOptions(
+AndroidOptions _getAndroidOptions() => const AndroidOptions(
   encryptedSharedPreferences: true,
 );
 ```
 For more information see the example app.
 - [`libsecret`](https://wiki.gnome.org/Projects/Libsecret) is used for Linux.
 
-_Note_ KeyStore was introduced in Android 4.3 (API level 18). The plugin wouldn't work for earlier versions.
 ## Important notice for Web
 flutter_secure_storage only works on HTTPS or localhost environments. [Please see this issue for more information.](https://github.com/mogol/flutter_secure_storage/issues/320#issuecomment-976308930)
 
@@ -85,7 +84,7 @@ await storage.write(key: key, value: value, iOptions: options);
 
 ### Configure Android version
 
-In `[project]/android/app/build.gradle` set `minSdkVersion` to >= 18.
+In `[project]/android/app/build.gradle` set `minSdkVersion` to >= 23.
 
 ```
 android {
@@ -93,7 +92,7 @@ android {
 
     defaultConfig {
         ...
-        minSdkVersion 18
+        minSdkVersion 23
         ...
     }
 
